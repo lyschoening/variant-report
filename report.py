@@ -1,0 +1,108 @@
+# -*- coding: utf-8 -*-
+
+import argparse
+from operator import attrgetter
+import re
+import subprocess
+import math
+import vcf
+from annotation.refgene import RefGene, VariantDescription
+from template import get_template
+import os
+
+__author__ = 'lyschoening'
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Generate a PDF report of Variants in genes.')
+    parser.add_argument('genes', metavar='gene', type=str, nargs='*', help='RefSeq gene name(s)')
+    parser.add_argument('-v', '--variants', type=str, help='Variant file (VCF), indexed')
+    parser.add_argument('-a', '--alignment', type=str, help='Alignment file (BAM), indexed, for coverage')
+    parser.add_argument('-G', type=str, help='File listing gene accession numbers, one per line')
+    parser.add_argument('-r', '--refgene', type=str, help='RefGene (genePredExt) table, e.g. -r hg19.refGene')
+    parser.add_argument('-o', '--output', type=str, default='Report')
+    parser.add_argument('--unique', type=bool, default=False, help='Only list variants that are unique to the sample')
+
+    args = parser.parse_args()
+
+    refgene = RefGene(args.refgene)
+
+    print args
+    genes = set(args.genes)
+
+    if args.G:
+        for line in open(args.G, 'r'):
+            genes.add(line.strip())
+
+    genes = list(refgene.filter(genes))
+
+    print "Genes:", ", ".join(map(str, genes))
+
+    vcf_reader = vcf.Reader(open(args.variants, 'r'))
+
+    print vcf_reader.infos
+    print
+    print vcf_reader.filters
+    print
+    print vcf_reader.metadata
+
+    print
+    print vcf_reader.alts
+
+
+    first_record = vcf_reader.next()
+
+    print first_record
+
+
+    samples = map(attrgetter('sample'), first_record.samples)
+
+    print samples
+
+
+    print first_record.INFO['EFF']
+
+    #exit()
+
+
+    #samples = ['S5']
+
+
+    for sample, sample_name in enumerate(samples, start=0):
+
+        tex_file_name = '%s_%s.tex' % (args.output, sample_name)
+
+        template = get_template()
+
+        with open(tex_file_name, 'w') as tex_file:
+
+            for gene in genes:
+                print gene
+                for variant in vcf_reader.fetch(gene.chrom, gene.start, gene.end):
+                    print variant, variant.samples
+                print
+
+
+            def objects(genes):
+                for gene in genes:
+                    coverage_table_rows = int(math.ceil(len(gene.exons) / 15.0))
+                    coverage_tuples = []
+
+                    exon_names = gene.get_exon_names()
+
+                    for row in range(coverage_table_rows):
+                        row_exon_names = exon_names[15 * row:15 * (row + 1)]
+                        row_exons = gene.exons[15 * row: 15 * (row + 1)]
+                        #row_exons_coverage = None
+                        # TODO coverage
+                        coverage_tuples.append(zip(row_exon_names, [0] * len(row_exons)))
+
+                    yield (gene, lambda: (VariantDescription(v, gene) for v in vcf_reader.fetch(gene.chrom, gene.start, gene.end)), coverage_tuples)
+
+
+            tex_file.write(template.render(objects=objects(genes), sample=sample, sample_name=sample_name))
+
+        for i in range(2): # call twice for proper table layout.
+            subprocess.call(('pdflatex', '-output-directory=%s' % os.path.dirname(tex_file_name), tex_file_name))
+        subprocess.call(('latexmk', '-c', tex_file_name))
+        os.unlink(tex_file_name)
