@@ -91,6 +91,10 @@ class VariantDescription(object):
         self.ID = variant.ID
         self.count = sum(call.is_variant == True for call in variant.samples)
 
+
+    def __getattr__(self, item):
+        return getattr(self.variant, item)
+
     def get_call(self, sample):
         return self.variant.samples[sample]
 
@@ -294,13 +298,17 @@ class Gene(object):
 
         if self.is_reverse:
             reference_sequence = reference_sequence.translate(dna_complement_trans)
-            allele_sequences = (sequence.translate(dna_complement_trans) for sequence in allele_sequences)
+            allele_sequences = [sequence.translate(dna_complement_trans) for sequence in allele_sequences]
+
         allele_sequences = list(set(allele_sequences))
 
         if site.is_snp:
             return 'c.%s%s>%s' % (str_for_pos(site.POS), reference_sequence,  ', '.join(map(str, allele_sequences)))
         elif site.is_indel:
-            deletion_length = len(site.REF) - len(allele_sequences[0])
+            if not allele_sequences:
+                deletion_length = len(site.REF)
+            else:
+                deletion_length = len(site.REF) - len(allele_sequences[0])
 
             if deletion_length > 0:
                 if deletion_length == 1:

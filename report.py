@@ -17,12 +17,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate a PDF report of Variants in genes.')
     parser.add_argument('genes', metavar='gene', type=str, nargs='*', help='RefSeq gene name(s)')
     parser.add_argument('-v', '--variants', type=str, help='Variant file (VCF), indexed')
-    parser.add_argument('-a', '--alignment', type=str, help='Alignment file (BAM), indexed, for coverage')
     parser.add_argument('-G', type=str, help='File listing gene accession numbers, one per line')
     parser.add_argument('-r', '--refgene', type=str, help='RefGene (genePredExt) table, e.g. -r hg19.refGene')
     parser.add_argument('-o', '--output', type=str, default='Report')
-    parser.add_argument('--unique', type=bool, default=False, help='Only list variants that are unique to the sample')
-
     args = parser.parse_args()
 
     refgene = RefGene(args.refgene)
@@ -40,37 +37,14 @@ if __name__ == '__main__':
 
     vcf_reader = vcf.Reader(open(args.variants, 'r'))
 
-    print vcf_reader.infos
-    print
-    print vcf_reader.filters
-    print
-    print vcf_reader.metadata
-
-    print
-    print vcf_reader.alts
-
-
     first_record = vcf_reader.next()
-
-    print first_record
-
 
     samples = map(attrgetter('sample'), first_record.samples)
 
-    print samples
-
-
-    print first_record.INFO['EFF']
-
-    #exit()
-
-
-    #samples = ['S5']
-
-
     for sample, sample_name in enumerate(samples, start=0):
 
-        tex_file_name = '%s_%s.tex' % (args.output, sample_name)
+        tex_file_prefix = '%s_%s' % (args.output, sample_name)
+        tex_file_name = '%s.tex' % tex_file_prefix
 
         template = get_template()
 
@@ -104,5 +78,7 @@ if __name__ == '__main__':
 
         for i in range(2): # call twice for proper table layout.
             subprocess.call(('pdflatex', '-output-directory=%s' % os.path.dirname(tex_file_name), tex_file_name))
-        subprocess.call(('latexmk', '-c', tex_file_name))
-        os.unlink(tex_file_name)
+        subprocess.call(('latexmk', '-output-directory=%s' % os.path.dirname(tex_file_name), '-c', tex_file_name))
+
+        for extension in ('tex', 'aux', 'log', 'out'): # latexmk old versions
+            os.unlink('.'.join((tex_file_prefix, extension)))
