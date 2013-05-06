@@ -202,42 +202,6 @@ class Gene(object):
                         yield (self.coding_start, self.coding_end, i)
                 # else: coding starts after exon ends
 
-#
-#    def __pos_desc(self, position):
-#        """
-#        Nomenclature from:
-#            http://www.hgvs.org/mutnomen/examplesDNA.html
-#        """
-#        exon, exon_offset, intron_offset = self.__get_base_offset(position)
-#        coding_offset -= self.coding_start_offset[2]
-#
-#
-#        if exon_offset == 0:
-#
-#        position_exon_offset, position_intron_offset = 0, 0
-#
-#        exon_offset, prev_exon_end = 0, 0
-#
-#        for i, (exon_start, exon_end) in enumerate(self.exons):
-#            if exon_start <= position <= exon_end:
-#                # position inside exon.
-#                position_exon_offset = exon_offset + (position - exon_start + 1)
-#                break
-#            elif position < exon_start:
-#                # position before exon.
-#                if prev_exon_end != 0 and position - prev_exon_end < exon_start - position:
-#                    position_exon_offset = exon_offset
-#                    position_intron_offset = position - prev_coding_end
-#                else:
-#                    position_exon_offset = exon_offset + 1
-#                    position_intron_offset = position - exon_start
-#                break
-#
-#            prev_coding_end = coding_end
-#            exon_offset += coding_end - coding_start + 1
-#
-#        return pos, relative
-#
 
     def get_position_details(self, position):
         exon, exon_offset, intron_offset = self.__get_base_offset(position)
@@ -331,26 +295,5 @@ class Gene(object):
 
         # TODO delins
 
-
-    def get_position_type_description(self, position):
-
-        """
-
-        coding region
-        intron
-
-        5' UTR
-        3' UTR
-
-
-
-        """
-        pass
-
-
-
-
-
-
     def __repr__(self):
-        return "<%s %s %s..%s, exons: %s>" % (self.name, self.chrom, self.start, self.end, len(self.exons))
+        return "<%s %s %s %s..%s, exons: %s>" % (self.name, self.accession, self.chrom, self.start, self.end, len(self.exons))

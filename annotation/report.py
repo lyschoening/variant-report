@@ -7,13 +7,13 @@ import subprocess
 import math
 import vcf
 from annotation.refgene import RefGene, VariantDescription
-from template import get_template
+from annotation.template import get_template
 import os
 
 __author__ = 'lyschoening'
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Generate a PDF report of Variants in genes.')
     parser.add_argument('genes', metavar='gene', type=str, nargs='*', help='RefSeq gene name(s)')
     parser.add_argument('-v', '--variants', type=str, help='Variant file (VCF), indexed')
@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     if args.G:
         for line in open(args.G, 'r'):
-            genes.add(line.strip())
+            genes.add(line.strip().split("\t")[0])
 
     genes = list(refgene.filter(genes))
 
@@ -51,27 +51,36 @@ if __name__ == '__main__':
         with open(tex_file_name, 'w') as tex_file:
 
             for gene in genes:
-                print gene
-                for variant in vcf_reader.fetch(gene.chrom, gene.start, gene.end):
-                    print variant, variant.samples
-                print
+                try:
+                    print gene
+                    for variant in vcf_reader.fetch(gene.chrom, gene.start, gene.end):
+                        print variant, variant.samples
+                    print
+                except:
+                    print "Error..", gene
+
 
 
             def objects(genes):
                 for gene in genes:
-                    coverage_table_rows = int(math.ceil(len(gene.exons) / 15.0))
-                    coverage_tuples = []
+                    try:
+                        coverage_table_rows = int(math.ceil(len(gene.exons) / 15.0))
+                        coverage_tuples = []
 
-                    exon_names = gene.get_exon_names()
+                        exon_names = gene.get_exon_names()
 
-                    for row in range(coverage_table_rows):
-                        row_exon_names = exon_names[15 * row:15 * (row + 1)]
-                        row_exons = gene.exons[15 * row: 15 * (row + 1)]
-                        #row_exons_coverage = None
-                        # TODO coverage
-                        coverage_tuples.append(zip(row_exon_names, [0] * len(row_exons)))
+                        for row in range(coverage_table_rows):
+                            row_exon_names = exon_names[15 * row:15 * (row + 1)]
+                            row_exons = gene.exons[15 * row: 15 * (row + 1)]
+                            #row_exons_coverage = None
+                            # TODO coverage
+                            coverage_tuples.append(zip(row_exon_names, [0] * len(row_exons)))
 
-                    yield (gene, lambda: (VariantDescription(v, gene) for v in vcf_reader.fetch(gene.chrom, gene.start, gene.end)), coverage_tuples)
+                        variants = vcf_reader.fetch(gene.chrom, gene.start, gene.end)
+
+                        yield (gene, lambda: (VariantDescription(v, gene) for v in variants), coverage_tuples)
+                    except:
+                        print "Error..", gene
 
 
             tex_file.write(template.render(objects=objects(genes), sample=sample, sample_name=sample_name))
@@ -82,3 +91,6 @@ if __name__ == '__main__':
 
         for extension in ('tex', 'aux', 'log', 'out'): # latexmk old versions
             os.unlink('.'.join((tex_file_prefix, extension)))
+
+if __name__ == '__main__':
+    main()
