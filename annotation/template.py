@@ -19,6 +19,11 @@ def escape_tex(value):
         newval = pattern.sub(replacement, newval)
     return newval
 
+import locale
+locale.setlocale(locale.LC_ALL, 'en_US')
+
+def int_add_commas(number):
+    return locale.format("%d", number, grouping=True)
 
 def get_template():
     texenv = Environment()
@@ -29,6 +34,7 @@ def get_template():
     #    texenv.comment_start_string = '((='
     #    texenv.comment_end_string = '=))'
     texenv.filters['escape_tex'] = escape_tex
+    texenv.filters['int_add_commas'] = int_add_commas
 
 
     template = texenv.from_string(r"""
@@ -65,7 +71,7 @@ def get_template():
     \begin{landscape}
     \section*{((( gene.name ))) gene}
 
-    Report for the ((( gene.name ))) gene, accession number {\tt ((( gene.accession|escape_tex )))}, at position {\tt ((( gene.chrom ))):((( '{0:,}'.format(gene.start) )))--((( '{0:,}'.format(gene.end) )))}.
+    Report for the ((( gene.name ))) gene, accession number {\tt ((( gene.accession|escape_tex )))}, at position {\tt ((( gene.chrom ))):((( gene.start|int_add_commas )))--((( gene.end|int_add_commas )))}.
 
     \subsection*{Unique, Moderate- \& High-impact Variants}
     {\sffamily
