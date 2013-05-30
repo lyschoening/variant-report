@@ -3,6 +3,12 @@ import string
 import math
 import re
 
+"""
+
+Nomenclature from http://www.hgvs.org/mutnomen/recs.html
+
+"""
+
 __author__ = 'lyschoening'
 
 
@@ -48,6 +54,33 @@ EFF_TYPE_TEXTS = {
     'NON_SYNONYMOUS_CODING': "Nonsynonymous Coding",
 }
 
+AMINO_ACID_SYMBOLS = {
+    'A': ('Ala', 'Alanine'),
+    'R': ('Arg', 'Arginine'),
+    'N': ('Asn', 'Asparagine'),
+    'D': ('Asp', 'Aspartic acid'),
+    'B': ('Asx', 'Asn or Asp'),
+    'C': ('Cys', 'Cysteine'),
+    'Q': ('Gln', 'Glutamine'),
+    'E': ('Glu', 'Glutamic acid'),
+    'Z': ('Glx', 'Gln or Glu'),
+    'G': ('Gly', 'Glycine'),
+    'H': ('His', 'Histidine'),
+    'I': ('Ile', 'Isoleucine'),
+    'L': ('Leu', 'Leucine'),
+    'K': ('Lys', 'Lysine'),
+    'M': ('Met', 'Methionine'),
+    'F': ('Phe', 'Phenylalanine'),
+    'P': ('Pro', 'Proline'),
+    'S': ('Ser', 'Serine'),
+    'T': ('Thr', 'Threonine'),
+    'W': ('Trp', 'Tryptophan'),
+    'Y': ('Tyr', 'Tyrosine'),
+    'V': ('Val', 'Valine'),
+}
+
+def aa_symbol_to_name(sym):
+    return AMINO_ACID_SYMBOLS[sym][2]
 
 class Eff(object):
     _eff_matcher = re.compile(EFF_REGEX_PATTERN)
@@ -68,6 +101,21 @@ class Eff(object):
         else:
             self.effect_type_text = string.capwords(self.effect_type.replace("_", " "))
 
+        self.aa_change_text = None
+
+        if self.aa_change:
+            self.aa_change = (self.aa_change[0], int(self.aa_change[1:-1]), self.aa_change[-1])
+
+            pos = self.aa_change[1]
+            ref, sub = tuple(
+                AMINO_ACID_SYMBOLS[aa][0] if aa in AMINO_ACID_SYMBOLS else aa
+                    for aa in (self.aa_change[0], self.aa_change[2])
+            )
+
+            self.aa_change_text = 'p.%s%s%s' % (ref, pos, sub)
+
+
+
 dna_complement_trans = string.maketrans('TAGCtagc', 'ATCGATCG')
 
 class VariantDescription(object):
@@ -82,6 +130,7 @@ class VariantDescription(object):
             self.effects = []
 
         self.impacts = [effect.impact for effect in self.effects]
+        self.aa_change_texts = set([effect.aa_change_text for effect in self.effects if effect.aa_change_text])
 
         self.exon, self.exon_offset = gene.get_position_details(variant.POS)
         self.pos = "%s:%s" % (variant.CHROM, variant.POS)
@@ -98,7 +147,7 @@ class VariantDescription(object):
     def get_call(self, sample):
         return self.variant.samples[sample]
 
-    def get_aa_change(self, call):
+    def get_base_change(self, call):
         return self.gene.get_variant_alleles(call)
 
     def get_mut_ref(self, call):

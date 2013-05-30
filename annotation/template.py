@@ -39,6 +39,7 @@ def get_template():
 
     template = texenv.from_string(r"""
 \documentclass[a4paper]{report}
+\usepackage{a4wide}
 \usepackage{fullpage}
 \usepackage{graphicx}
 \usepackage{microtype}
@@ -73,82 +74,71 @@ def get_template():
 
     Report for the ((( gene.name ))) gene, accession number {\tt ((( gene.accession|escape_tex )))}, at position {\tt ((( gene.chrom ))):((( gene.start|int_add_commas )))--((( gene.end|int_add_commas )))}.
 
-    \subsection*{Unique, Moderate- \& High-impact Variants}
-    {\sffamily
-        \begin{longtable}{@{\extracolsep{\fill}}llrclrrlr@{}}
-        \toprule
-            Location & Position & Quality & Type & Nucleotide change & AAF & Web Ref (refSNP) & Mut Ref & Mutation Effect  \\
-        \midrule
-        \endhead
-            {% for variant in variants() -%}
-                {% set call = variant.get_call(sample) %}
-                {% if call.is_variant and ((call.data.GQ > 9 and ('MODERATE' in call.impacts or variant.num_het + variant.num_hom_alt == 1)) or 'HIGH' in call.impacts) -%}
-                    E((( variant.exon ))) &
-                    ((( variant.exon_offset ))) &
-                    ((( call.data.GQ ))) &
-                    ((( variant.var_type ))) &
-                        {% if variant.get_aa_change(call)|join(", ")|length > 10 %}\footnotesize{% endif %}
-                        {% if variant.get_aa_change(call)|join(", ")|length > 15 %}\scriptsize{% endif %}
-                        ((( variant.REF ))) $\rightarrow$ ((( variant.get_aa_change(call)|join(", ") )))
-                            ({% if call.is_het %}het{% else %}hom{% endif %})
-                     &
-                    ((( variant.aaf ))) &
-                    {% if variant.ID -%}
-                        \href{http://ncbi.nlm.nih.gov/SNP/snp_ref.cgi?rs=((( variant.ID )))}{((( variant.ID )))}
-                    {% else %}
-                        ---
-                    {%- endif %} &
-                    {% if variant.get_mut_ref(call)|length > 20 %}\footnotesize{% endif %}
-                    {% if variant.get_mut_ref(call)|length > 30 %}\scriptsize{% endif %}
-                    ((( variant.get_mut_ref(call)|escape_tex )))  &
-                    {% if not variant.effects %}---{% endif %}
-                    {% for effect in variant.effects -%}
-                        {% if effect.impact == 'HIGH' %}\color{red}{% endif %}
-                        ((( effect.effect_type_text ))){% if not loop.last %}, {% endif %}
-                    {%- endfor %}\\
-                {%- endif %}
-            {%- endfor %}
-        \bottomrule
-        \end{longtable}
-    }
-
-    \subsection*{All Variants}
-    {\sffamily
-        \begin{longtable}{@{\extracolsep{\fill}}llrclrlr@{}}
-        \toprule
-            Location & Position & Quality & Type & Nucleotide change & Web Ref (refSNP) & Mut Ref & Mutation Effect  \\
-        \midrule
-        \endhead
-            {% for variant in variants() -%}
-                {% set call = variant.get_call(sample) %}
-                {% if call.is_variant and (call.data.GQ > 9 or 'HIGH' in call.impacts) -%}
-                    E((( variant.exon ))) &
-                    ((( variant.exon_offset ))) &
-                    ((( call.data.GQ ))) &
-                    ((( variant.var_type ))) &
-                        {% if variant.get_aa_change(call)|join(", ")|length > 10 %}\footnotesize{% endif %}
-                        {% if variant.get_aa_change(call)|join(", ")|length > 15 %}\scriptsize{% endif %}
-                        ((( variant.REF ))) $\rightarrow$ ((( variant.get_aa_change(call)|join(", ") )))
-                            ({% if call.is_het %}het{% else %}hom{% endif %})
-                     &
-                    {% if variant.ID -%}
-                        \href{http://ncbi.nlm.nih.gov/SNP/snp_ref.cgi?rs=((( variant.ID )))}{((( variant.ID )))}
-                    {% else %}
-                        ---
-                    {%- endif %} &
-                    {% if variant.get_mut_ref(call)|length > 20 %}\footnotesize{% endif %}
-                    {% if variant.get_mut_ref(call)|length > 30 %}\scriptsize{% endif %}
-                    ((( variant.get_mut_ref(call)|escape_tex )))  &
-                    {% if not variant.effects %}---{% endif %}
-                    {% for effect in variant.effects -%}
-                        {% if effect.impact == 'HIGH' %}\color{red}{% endif %}
-                        ((( effect.effect_type_text ))){% if not loop.last %}, {% endif %}
-                    {%- endfor %}\\
-                {%- endif %}
-            {%- endfor %}
-        \bottomrule
-        \end{longtable}
-    }
+    {% for table in tables %}
+        \subsection*{((( table.title|escape_tex )))}
+        {\sffamily
+            \begin{longtable}{@{\extracolsep{\fill}}((( table.column_alignments )))@{}}
+            \toprule
+                {% for column in table %}
+                    ((( column.name|escape_tex ))){% if not loop.last %}&{% endif %}
+                {% endfor %} \\
+            \midrule
+            \endhead
+                {% for variant in variants() -%}
+                    {% set call = variant.get_call(sample) %}
+                    {% if call.is_variant and table.matcher(variant, call) -%}
+                        {% for column in table -%}
+                            {% if column.type == 'exon' -%}
+                                E((( variant.exon )))
+                            {% elif column.type == 'pos' %}
+                                ((( variant.exon_offset )))
+                            {% elif column.type == 'abspos' %}
+                                \tt ((( variant.CHROM ))):((( variant.POS|int_add_commas )))
+                            {% elif column.type == 'qual' %}
+                            ((( call.data.GQ )))
+                            {% elif column.type == 'type' %}
+                            ((( variant.var_type )))
+                            {% elif column.type == 'nc' %}
+                                {% if variant.get_base_change(call)|join(", ")|length > 10 %}\footnotesize{% endif %}
+                                {% if variant.get_base_change(call)|join(", ")|length > 15 %}\scriptsize{% endif %}
+                                ((( variant.REF ))) $\rightarrow$ ((( variant.get_base_change(call)|join(", ") )))
+                                    ({% if call.is_het %}het{% else %}hom{% endif %})
+                            {% elif column.type == 'aac' %}
+                                {% if variant.aa_change_texts %}
+                                \tt ((( variant.aa_change_texts|join(", ")|escape_tex )))
+                                {% else %}
+                                    ---
+                                {% endif %}
+                            {% elif column.type == 'aaf' %}
+                                ((( variant.aaf )))
+                            {% elif column.type == 'webref' %}
+                                {% if variant.ID -%}
+                                    \href{http://ncbi.nlm.nih.gov/SNP/snp_ref.cgi?rs=((( variant.ID )))}{((( variant.ID )))}
+                                {% else %}
+                                    ---
+                                {%- endif %}
+                            {% elif column.type == 'mutref' %}
+                                {% if variant.get_mut_ref(call)|length > 20 %}\footnotesize{% endif %}
+                                {% if variant.get_mut_ref(call)|length > 30 %}\scriptsize{% endif %}
+                                ((( variant.get_mut_ref(call)|escape_tex )))
+                            {% elif column.type == 'eff' %}
+                                {% if not variant.effects -%}
+                                    ---
+                                {% else %}
+                                    {% for effect in variant.effects -%}
+                                        {% if effect.impact == 'HIGH' %}\color{red}{% endif %}
+                                        ((( effect.effect_type_text ))){% if not loop.last %}, {% endif %}
+                                    {%- endfor %}
+                                {%- endif %}
+                            {%- endif %}
+                            {% if not loop.last %}&{% endif %}
+                        {%- endfor %} \\
+                    {%- endif %}
+                {%- endfor %}
+            \bottomrule
+            \end{longtable}
+        }
+    {% endfor %}
     \end{landscape}
 {% endfor %}
 \end{document}
