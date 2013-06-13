@@ -68,27 +68,29 @@ def get_template():
 \setlength\tabcolsep{2pt}
 
 \title{((( sample_name|escape_tex )))}
+\maketitle
+
+\begin{landscape}
 
 {	\sf
-    \begin{longtable}{@{\extracolsep{\fill}}llrrr@{\extracolsep{\fill}}}
+    \begin{longtable}{@{\extracolsep{\fill}}lrrrr@{\extracolsep{\fill}}}
     \toprule
     ID & Position & Min. & Avg. & Max. Coverage \\
-    \endhead
     \toprule
+    \endhead
 
-{% for id contig, start, end, min_coverage, max_coverage, mean_coverage in objects %}
-    {%if min_coverage < minimum_coverage %}\color{red}{% endif %} \textbf{((( id|escape_tex )))} &
-    \tt ((( gene.chrom ))):((( gene.start|int_add_commas )))--((( gene.end|int_add_commas ))) &
-    {%if min_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( min_coverage ))) &
-    {%if mean_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( mean_coverage ))) &
-    {%if max_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( max_coverage ))) \\
+{% for name, chrom, start, end, min_coverage, max_coverage, mean_coverage in objects %}
+    {% if min_coverage < minimum_coverage %}\color{red}{% endif %} \textbf{((( name|escape_tex )))} &
+    \tt ((( chrom ))):((( start|int_add_commas )))--((( end|int_add_commas ))) &
+    {% if min_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( '%d' | format(min_coverage) ))) &
+    {% if mean_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( '%d' | format(mean_coverage) ))) &
+    {% if max_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( '%0.2f'| format(max_coverage) ))) \\
 {% endfor %}
 
     \bottomrule
-    \endfoot
-
     \end{longtable}
 }
+\end{landscape}
 
 \end{document}
 """)

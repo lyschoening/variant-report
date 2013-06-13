@@ -6,8 +6,8 @@ import numpy
 import os.path
 import pysam
 from annotation.utils import BEDReader
-from coverage_template import get_template
-from refgene import RefGene
+from annotation.interval_coverage_template import get_template
+from annotation.refgene import RefGene
 from os.path import basename
 
 __author__ = 'lyschoening'
@@ -104,7 +104,7 @@ def main():
         def objects(intervals):
             for line in BEDReader(intervals):
 
-                chrom, start, end = line['chrom'], line['chromStart'], line['chromEnd']
+                chrom, start, end = line['chrom'], int(line['chromStart']), int(line['chromEnd'])
 
                 pileups = numpy.zeros(end - start + 1)
 
@@ -116,7 +116,7 @@ def main():
 
                 yield line['name'], chrom, start, end, numpy.min(pileups), numpy.max(pileups), numpy.mean(pileups)
 
-        tex_file.write(template.render(objects=objects(args.i), minimum_coverage=args.minimum_coverage, sample=sample, sample_name=sample_name))
+        tex_file.write(template.render(objects=objects(args.intervals), minimum_coverage=args.minimum_coverage, sample=sample, sample_name=sample_name))
 
 
     print ('pdflatex', '-output-directory=%s' % os.path.dirname(tex_file_name), tex_file_name)

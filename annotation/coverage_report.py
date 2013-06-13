@@ -5,8 +5,8 @@ import subprocess
 import numpy
 import os.path
 import pysam
-from coverage_template import get_template
-from refgene import RefGene
+from annotation.coverage_template import get_template
+from annotation.refgene import RefGene
 from os.path import basename
 
 __author__ = 'lyschoening'
