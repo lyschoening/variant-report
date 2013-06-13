@@ -51,10 +51,15 @@ def main():
 
     parser = argparse.ArgumentParser(description='Generate a PDF report of Variants in genes.')
     parser.add_argument('genes', metavar='gene', type=str, nargs='*', help='RefSeq gene name(s)')
-    parser.add_argument('-v', '--variants', type=str, help='Variant file (VCF), indexed')
+    parser.add_argument('-v', '--variants', type=str, help='Variant file (*.vcf,*.vcf.gz), indexed')
     parser.add_argument('-G', type=str, help='File listing gene accession numbers, one per line')
     parser.add_argument('-r', '--refgene', type=str, help='RefGene (genePredExt) table, e.g. -r hg19.refGene')
     parser.add_argument('-o', '--output', type=str, default='Report')
+    # parser.add_argument('--tables', type=str, default='IMPORTANT_VARIANTS,ALL_VARIANTS')
+
+    parser.add_argument('--unique-only', type=bool, default=False)
+
+
     args = parser.parse_args()
 
     refgene = RefGene(args.refgene)
@@ -72,10 +77,9 @@ def main():
 
     vcf_reader = vcf.Reader(open(args.variants, 'r'))
 
+    # Read first records to get the list of samples; sample names are not included in the VCF header.
     first_record = vcf_reader.next()
-
     samples = map(attrgetter('sample'), first_record.samples)
-
 
     all_variants_default = Table(
         columns=('exon', 'abspos', 'qual', 'type', 'aac', 'nc', 'aaf', 'webref', 'mutref', 'eff'),
@@ -92,21 +96,21 @@ def main():
     for sample, sample_name in enumerate(samples, start=0):
 
         tex_file_prefix = '%s_%s' % (args.output, sample_name)
-        tex_file_name = '%s.tex' % tex_file_prefix
+        tex_file_name = os.path.abspath('%s.tex' % tex_file_prefix)
 
         template = get_template()
 
         with open(tex_file_name, 'w') as tex_file:
-
-            for gene in genes:
-                try:
-                    print gene
-                    for variant in vcf_reader.fetch(gene.chrom, gene.start, gene.end):
-                        print variant, variant.samples
-                    print
-                except:
-                    print "Error..", gene
-
+#
+#            for gene in genes:
+#                try:
+#                    print gene
+#                    for variant in vcf_reader.fetch(gene.chrom, gene.start, gene.end):
+#                        print variant, variant.samples
+#                    print
+#                except:
+#                    print "Error..", gene
+#
 
 
             def objects(genes):
@@ -131,7 +135,14 @@ def main():
                         print "Error..", gene
 
 
-            tex_file.write(template.render(objects=objects(genes), tables=[unique_moderate_variants_default, all_variants_default], sample=sample, sample_name=sample_name))
+            tables = [unique_moderate_variants_default, all_variants_default]
+
+
+            if args.unique_only:
+                tables = [unique_moderate_variants_default]
+
+            tex_file.write(template.render(objects=objects(genes), tables=[unique_moderate_variants_default]
+                , sample=sample, sample_name=sample_name))
 
         for i in range(2): # call twice for proper table layout.
             subprocess.call(('pdflatex', '-output-directory=%s' % os.path.dirname(tex_file_name), tex_file_name))

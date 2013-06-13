@@ -75,7 +75,7 @@ def get_template():
     Report for the ((( gene.name ))) gene, accession number {\tt ((( gene.accession|escape_tex )))}, at position {\tt ((( gene.chrom ))):((( gene.start|int_add_commas )))--((( gene.end|int_add_commas )))}.
 
     {% for table in tables %}
-        \subsection*{((( table.title|escape_tex )))}
+        \subsection*{sss((( table.title|escape_tex )))}
         {\sffamily
             \begin{longtable}{@{\extracolsep{\fill}}((( table.column_alignments )))@{}}
             \toprule

@@ -14,6 +14,8 @@ setup(
     entry_points={
         'console_scripts': [
             'variant-report = annotation.report:main'
+            'coverage-report = annotation.coverage_report:main'
+            'interval-report = annotation.interval_coverage_report:main'
         ]
     },
     author_email='lars@lyschoening.de',
