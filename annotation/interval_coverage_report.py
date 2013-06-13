@@ -1,21 +1,17 @@
 from __future__ import division
 import argparse
-import math
 import subprocess
 import numpy
 import os.path
 import pysam
 from annotation.utils import BEDReader
 from annotation.interval_coverage_template import get_template
-from annotation.refgene import RefGene
 from os.path import basename
 
 __author__ = 'lyschoening'
 
 
-
 def main():
-
     parser = argparse.ArgumentParser(description='Generate a PDF report of Coverage in genes.')
     parser.add_argument('genes', metavar='gene', type=str, nargs='*', help='RefSeq gene name(s)')
     parser.add_argument('-c' '--coverage', type=str, help='Bam file (*.bam), indexed')
@@ -28,10 +24,8 @@ def main():
 
     print args
 
-
     sample = pysam.Samfile(args.c__coverage, 'rb')
     sample_name = basename(args.c__coverage).split('.')[0]
-
 
     tex_file_prefix = '%s_%s_coverage' % (args.output, sample_name)
     tex_file_name = os.path.abspath('%s.tex' % tex_file_prefix)
@@ -103,7 +97,6 @@ def main():
 
         def objects(intervals):
             for line in BEDReader(intervals):
-
                 chrom, start, end = line['chrom'], int(line['chromStart']), int(line['chromEnd'])
 
                 pileups = numpy.zeros(end - start + 1)
@@ -116,8 +109,9 @@ def main():
 
                 yield line['name'], chrom, start, end, numpy.min(pileups), numpy.max(pileups), numpy.mean(pileups)
 
-        tex_file.write(template.render(objects=objects(args.intervals), minimum_coverage=args.minimum_coverage, sample=sample, sample_name=sample_name))
-
+        tex_file.write(
+            template.render(objects=objects(args.intervals), minimum_coverage=args.minimum_coverage, sample=sample,
+                            sample_name=sample_name))
 
     print ('pdflatex', '-output-directory=%s' % os.path.dirname(tex_file_name), tex_file_name)
 

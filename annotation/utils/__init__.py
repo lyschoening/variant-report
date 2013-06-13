@@ -1,6 +1,7 @@
 __author__ = 'lyschoening'
 
 import csv
+
 class CommentedFileReader:
     """
     Helper class for file reading.
@@ -11,20 +12,23 @@ class CommentedFileReader:
     for row in tsv_file:
         print row[2] # prints column 3 of each line
     """
+
     def __init__(self, f, commentstring="#"):
         self.f = open(f, 'rU')
         self.commentstring = commentstring
+
     def next(self):
         line = self.f.next()
         while line.startswith(self.commentstring):
             line = self.f.next()
         return line
+
     def __iter__(self):
         return self
 
-csv.register_dialect('bed', delimiter = '\t',
-                     quoting = csv.QUOTE_NONE,
-                     skipinitialspace = True)
+csv.register_dialect('bed', delimiter='\t',
+                     quoting=csv.QUOTE_NONE,
+                     skipinitialspace=True)
 
 class BEDReader(csv.DictReader):
     """

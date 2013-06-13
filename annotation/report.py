@@ -2,7 +2,6 @@
 
 import argparse
 from operator import attrgetter
-import re
 import subprocess
 import math
 import vcf
@@ -11,7 +10,6 @@ from annotation.template import get_template
 import os
 
 __author__ = 'lyschoening'
-
 
 COLUMN_NAMES = {
     'exon': 'Location',
@@ -28,7 +26,6 @@ COLUMN_NAMES = {
 }
 
 class Table(object):
-
     def __init__(self, columns, matcher, title):
         """
         Matcher is a function of the type lambda variant, call, used to filter variants shown in this table.
@@ -37,7 +34,7 @@ class Table(object):
         self.matcher = matcher
         self.title = title
 
-        self.column_alignments = 'l'*len(columns)
+        self.column_alignments = 'l' * len(columns)
 
         # llrclrrlr
 
@@ -48,7 +45,6 @@ class Table(object):
 
 
 def main():
-
     parser = argparse.ArgumentParser(description='Generate a PDF report of Variants in genes.')
     parser.add_argument('genes', metavar='gene', type=str, nargs='*', help='RefSeq gene name(s)')
     parser.add_argument('-v', '--variants', type=str, help='Variant file (*.vcf,*.vcf.gz), indexed')
@@ -58,7 +54,6 @@ def main():
     # parser.add_argument('--tables', type=str, default='IMPORTANT_VARIANTS,ALL_VARIANTS')
 
     parser.add_argument('--unique-only', type=bool, default=False)
-
 
     args = parser.parse_args()
 
@@ -89,28 +84,28 @@ def main():
 
     unique_moderate_variants_default = Table(
         columns=('exon', 'abspos', 'qual', 'type', 'aac', 'nc', 'aaf', 'webref', 'mutref', 'eff'),
-        matcher=lambda variant, call: (call.data.GQ > 9 and ('MODERATE' in variant.impacts or variant.num_het + variant.num_hom_alt == 1)) or 'HIGH' in variant.impacts,
+        matcher=lambda variant, call: (call.data.GQ > 9 and (
+        'MODERATE' in variant.impacts or variant.num_het + variant.num_hom_alt == 1)) or 'HIGH' in variant.impacts,
         title='Unique, Moderate- & High-impact Variants'
     )
 
     for sample, sample_name in enumerate(samples, start=0):
-
         tex_file_prefix = '%s_%s' % (args.output, sample_name)
         tex_file_name = os.path.abspath('%s.tex' % tex_file_prefix)
 
         template = get_template()
 
         with open(tex_file_name, 'w') as tex_file:
-#
-#            for gene in genes:
-#                try:
-#                    print gene
-#                    for variant in vcf_reader.fetch(gene.chrom, gene.start, gene.end):
-#                        print variant, variant.samples
-#                    print
-#                except:
-#                    print "Error..", gene
-#
+        #
+        #            for gene in genes:
+        #                try:
+        #                    print gene
+        #                    for variant in vcf_reader.fetch(gene.chrom, gene.start, gene.end):
+        #                        print variant, variant.samples
+        #                    print
+        #                except:
+        #                    print "Error..", gene
+        #
 
 
             def objects(genes):
@@ -136,7 +131,6 @@ def main():
 
 
             tables = [unique_moderate_variants_default, all_variants_default]
-
 
             if args.unique_only:
                 tables = [unique_moderate_variants_default]

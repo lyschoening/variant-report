@@ -20,10 +20,12 @@ def escape_tex(value):
     return newval
 
 import locale
+
 locale.setlocale(locale.LC_ALL, 'en_US')
 
 def int_add_commas(number):
     return locale.format("%d", number, grouping=True)
+
 
 def get_template():
     texenv = Environment()
@@ -35,7 +37,6 @@ def get_template():
     #    texenv.comment_end_string = '=))'
     texenv.filters['escape_tex'] = escape_tex
     texenv.filters['int_add_commas'] = int_add_commas
-
 
     template = texenv.from_string(r"""
 \documentclass[a4paper]{report}

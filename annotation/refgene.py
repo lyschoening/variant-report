@@ -13,7 +13,6 @@ __author__ = 'lyschoening'
 
 
 class RefGene(object):
-
     def __init__(self, filename):
         self.__filename = filename
 
@@ -82,6 +81,7 @@ AMINO_ACID_SYMBOLS = {
 def aa_symbol_to_name(sym):
     return AMINO_ACID_SYMBOLS[sym][2]
 
+
 class Eff(object):
     _eff_matcher = re.compile(EFF_REGEX_PATTERN)
 
@@ -115,11 +115,9 @@ class Eff(object):
             self.aa_change_text = 'p.%s%s%s' % (ref, pos, sub)
 
 
-
 dna_complement_trans = string.maketrans('TAGCtagc', 'ATCGATCG')
 
 class VariantDescription(object):
-
     def __init__(self, variant, gene):
         self.variant = variant
         self.gene = gene
@@ -156,16 +154,14 @@ class VariantDescription(object):
     def get_genotype_call_accuracy(self, call):
         quality = call.data.GQ
         nines = math.ceil(quality / 10.0)
-        accuracy = (1. - 10.**(-quality/10.)) * 100
+        accuracy = (1. - 10. ** (-quality / 10.)) * 100
         if accuracy > 99.999:
             return '>99.999%'
         else:
             return ("{0:.%if}%%" % nines).format(accuracy)
 
 
-
 class Gene(object):
-
     def __init__(self, name, chrom, start, end, exons, strand, coding_start=None, coding_end=None, refseq_name=None):
         self.name = name
         self.accession = refseq_name
@@ -207,9 +203,9 @@ class Gene(object):
                     if i == 1: # position before first exon.
                         return 1, 0, pos - exon_start - 1
                     else: # position before Nth exon; N > 1
-#                        if pos == 41208692:
-#                            print pos, exon_start, exon_end, pos, exon_start - pos, prev_exon_start - pos, exon_end - pos
-#                            exit()
+                    #                        if pos == 41208692:
+                    #                            print pos, exon_start, exon_end, pos, exon_start - pos, prev_exon_start - pos, exon_end - pos
+                    #                            exit()
                         if prev_exon_start - pos < pos - exon_end:
                             return i - 1, exon_offset, prev_exon_start - pos + 1
                         else:
@@ -242,14 +238,14 @@ class Gene(object):
                     yield (exon_start, exon_end, i)
                 elif exon_start <= self.coding_end:
                     yield (exon_start, self.coding_end, i)
-                # else: coding ends before exon starts
+                    # else: coding ends before exon starts
             else: # coding starts after exon starts
                 if exon_end >= self.coding_start:
                     if exon_end <= self.coding_end:
                         yield (self.coding_start, exon_end, i)
                     else:
                         yield (self.coding_start, self.coding_end, i)
-                # else: coding starts after exon ends
+                        # else: coding starts after exon ends
 
 
     def get_position_details(self, position):
@@ -301,7 +297,6 @@ class Gene(object):
                 return '%s+%s' % (coding_offset, intron_offset)
 
         def str_for_range(a, b, change):
-
             if self.is_reverse:
                 a, b = b, a
             return 'c.%s_%s%s' % (str_for_pos(a), str_for_pos(b), change)
@@ -316,7 +311,7 @@ class Gene(object):
         allele_sequences = list(set(allele_sequences))
 
         if site.is_snp:
-            return 'c.%s%s>%s' % (str_for_pos(site.POS), reference_sequence,  ', '.join(map(str, allele_sequences)))
+            return 'c.%s%s>%s' % (str_for_pos(site.POS), reference_sequence, ', '.join(map(str, allele_sequences)))
         elif site.is_indel:
             if not allele_sequences:
                 deletion_length = len(site.REF)
@@ -327,7 +322,8 @@ class Gene(object):
                 if deletion_length == 1:
                     return 'c.%sdel' % str_for_pos(site.POS + 1)
                 else:
-                    return str_for_range(site.POS + deletion_length - 1, site.POS + deletion_length * 2 - 2, 'del%i' % deletion_length)
+                    return str_for_range(site.POS + deletion_length - 1, site.POS + deletion_length * 2 - 2,
+                                         'del%i' % deletion_length)
             else: # is insertion
                 return str_for_range(site.POS, site.POS + 1, 'ins' + allele_sequences[0][len(reference_sequence):])
 
@@ -342,7 +338,8 @@ class Gene(object):
                     return str_for_range(site.POS, site.POS + variation_length, site.INFO['SVTYPE'].lower())
             return 'Unknown: %s' % site.INFO['SVTYPE']
 
-        # TODO delins
+            # TODO delins
 
     def __repr__(self):
-        return "<%s %s %s %s..%s, exons: %s>" % (self.name, self.accession, self.chrom, self.start, self.end, len(self.exons))
+        return "<%s %s %s %s..%s, exons: %s>" % (
+        self.name, self.accession, self.chrom, self.start, self.end, len(self.exons))

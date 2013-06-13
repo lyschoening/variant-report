@@ -12,9 +12,7 @@ from os.path import basename
 __author__ = 'lyschoening'
 
 
-
 def main():
-
     parser = argparse.ArgumentParser(description='Generate a PDF report of Coverage in genes.')
     parser.add_argument('genes', metavar='gene', type=str, nargs='*', help='RefSeq gene name(s)')
     parser.add_argument('-c' '--coverage', type=str, help='Bam file (*.bam), indexed')
@@ -43,15 +41,12 @@ def main():
     sample = pysam.Samfile(args.c__coverage, 'rb')
     sample_name = basename(args.c__coverage).split('.')[0]
 
-
     tex_file_prefix = '%s_%s_coverage' % (args.output, sample_name)
     tex_file_name = os.path.abspath('%s.tex' % tex_file_prefix)
 
     template = get_template()
 
     with open(tex_file_name, 'w') as tex_file:
-
-
         def objects(genes):
             for gene in genes:
                 try:
@@ -67,11 +62,10 @@ def main():
                         # TODO coverage
                         coverage_tuples.append(zip(row_exon_names, [0] * len(row_exons)))
 
-
                     pileups = numpy.zeros(gene.end - gene.start)
                     coverage = numpy.zeros(len(gene.exons))
 
-                   # short_chrom = gene.chrom[3:] if gene.chrom.startswith('chr') else gene.chrom
+                    # short_chrom = gene.chrom[3:] if gene.chrom.startswith('chr') else gene.chrom
 
                     for pileup in sample.pileup(gene.chrom, gene.start, gene.end):
                         try:
@@ -83,13 +77,15 @@ def main():
                     def exons():
                         for j, exon in enumerate(gene.exons):
                             exon_start, exon_end = exon
-                            exon_pileup = pileups[max(0, exon_start - gene.start):min(gene.end - gene.start, exon_end - gene.start)]
-
+                            exon_pileup = pileups[max(0, exon_start - gene.start):min(gene.end - gene.start,
+                                                                                      exon_end - gene.start)]
 
                             if gene.is_reverse:
-                                points = [(i, exon_pileup[len(exon_pileup) // (20 - 20 * i) if i != 20 else 0]) for i in range(21)]
+                                points = [(i, exon_pileup[len(exon_pileup) // (20 - 20 * i) if i != 20 else 0]) for i in
+                                          range(21)]
                             else:
-                                points = [(i, exon_pileup[len(exon_pileup) // 20 * i if i != 0 else 0]) for i in range(21)]
+                                points = [(i, exon_pileup[len(exon_pileup) // 20 * i if i != 0 else 0]) for i in
+                                          range(21)]
 
                             #coverage[i][j] = max(exon_pileup)
                             # TODO reverse points if on minus strand
@@ -98,10 +94,8 @@ def main():
 
 
 
-                            yield {'points': points, 'name': exon_names[j], 'coding': exon_start > gene.coding_start and exon_end < gene.coding_end}
-
-
-
+                            yield {'points': points, 'name': exon_names[j],
+                                   'coding': exon_start > gene.coding_start and exon_end < gene.coding_end}
 
 
                     #variants = list(vcf_reader.fetch(gene.chrom, gene.start, gene.end))
@@ -114,7 +108,6 @@ def main():
 
 
         tex_file.write(template.render(objects=objects(genes), sample=sample, sample_name=sample_name))
-
 
     print ('pdflatex', '-output-directory=%s' % os.path.dirname(tex_file_name), tex_file_name)
 
