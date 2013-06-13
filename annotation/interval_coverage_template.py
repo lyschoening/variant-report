@@ -83,8 +83,8 @@ def get_template():
     {% if min_coverage < minimum_coverage %}\color{red}{% endif %} \textbf{((( name|escape_tex )))} &
     \tt ((( chrom ))):((( start|int_add_commas )))--((( end|int_add_commas ))) &
     {% if min_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( '%d' | format(min_coverage) ))) &
-    {% if mean_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( '%d' | format(mean_coverage) ))) &
-    {% if max_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( '%0.2f'| format(max_coverage) ))) \\
+    {% if mean_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( '%3.2f' | format(mean_coverage) ))) &
+    {% if max_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( '%d'| format(max_coverage) ))) \\
 {% endfor %}
 
     \bottomrule
