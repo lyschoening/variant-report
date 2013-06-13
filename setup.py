@@ -6,15 +6,15 @@ with open('requirements.txt', 'r') as f:
 
 setup(
     name='variant-report',
-    version='0.0.3',
+    version='0.1.1',
     packages=['annotation', 'annotation.utils'],
     url='',
     license='',
     author=u'Lars Schöning',
     entry_points={
         'console_scripts': [
-            'variant-report = annotation.report:main'
-            'coverage-report = annotation.coverage_report:main'
+            'variant-report = annotation.report:main',
+            'coverage-report = annotation.coverage_report:main',
             'interval-report = annotation.interval_coverage_report:main'
         ]
     },
