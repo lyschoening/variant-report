@@ -44,7 +44,8 @@ def get_template():
 \usepackage{graphicx}
 \usepackage{microtype}
 
-\usepackage{color}
+\usepackage{xcolor}
+\usepackage{colortbl}
 
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
@@ -75,12 +76,12 @@ def get_template():
     \endhead
     \toprule
 
-{% for id contig, start, end, min, max, mean in objects %}
-    \textbf{((( id|escape_tex )))} &
+{% for id contig, start, end, min_coverage, max_coverage, mean_coverage in objects %}
+    {%if min_coverage < minimum_coverage %}\color{red}{% endif %} \textbf{((( id|escape_tex )))} &
     \tt ((( gene.chrom ))):((( gene.start|int_add_commas )))--((( gene.end|int_add_commas ))) &
-    ((( min ))) &
-    ((( mean ))) &
-    ((( max ))) \\
+    {%if min_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( min_coverage ))) &
+    {%if mean_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( mean_coverage ))) &
+    {%if max_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( max_coverage ))) \\
 {% endfor %}
 
     \bottomrule
