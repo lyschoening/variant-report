@@ -50,16 +50,20 @@ def main():
         def objects(genes):
             for gene in genes:
                 try:
-                    coverage_table_rows = int(math.ceil(len(gene.exons) / 15.0))
+                    COLS_PER_ROW = 20
+                    coverage_table_rows = int(math.ceil(len(gene.exons) / COLS_PER_ROW))
                     coverage_tuples = []
+
+                    coverage_exon_rows = []
 
                     exon_names = gene.get_exon_names()
 
                     for row in range(coverage_table_rows):
-                        row_exon_names = exon_names[15 * row:15 * (row + 1)]
-                        row_exons = gene.exons[15 * row: 15 * (row + 1)]
+                        row_exon_names = exon_names[COLS_PER_ROW * row:COLS_PER_ROW * (row + 1)]
+                        row_exons = gene.exons[COLS_PER_ROW * row: COLS_PER_ROW * (row + 1)]
                         #row_exons_coverage = None
                         # TODO coverage
+                        coverage_exon_rows.append((range(COLS_PER_ROW * row, min(len(gene.exons), COLS_PER_ROW * (row + 1))), row_exon_names))
                         coverage_tuples.append(zip(row_exon_names, [0] * len(row_exons)))
 
                     pileups = numpy.zeros(gene.end - gene.start)
@@ -81,10 +85,10 @@ def main():
                                                                                       exon_end - gene.start)]
 
                             if gene.is_reverse:
-                                points = [(i, exon_pileup[len(exon_pileup) // (20 - 20 * i) if i != 20 else 0]) for i in
+                                points = [(i, exon_pileup[(len(exon_pileup) // 20) * (20 - i) if i != 20 else 0]) for i in
                                           range(21)]
                             else:
-                                points = [(i, exon_pileup[len(exon_pileup) // 20 * i if i != 0 else 0]) for i in
+                                points = [(i, exon_pileup[(len(exon_pileup) // 20) * i if i != 0 else 0]) for i in
                                           range(21)]
 
                             #coverage[i][j] = max(exon_pileup)
@@ -94,14 +98,20 @@ def main():
 
 
 
-                            yield {'points': points, 'name': exon_names[j],
-                                   'coding': exon_start > gene.coding_start and exon_end < gene.coding_end}
+                            yield {
+                                'points': points,
+                                'name': exon_names[j],
+                                'min': exon_pileup.min(),
+                                'max': exon_pileup.max(),
+                                'mean': exon_pileup.mean(),
+                                'coding': exon_start > gene.coding_start and exon_end < gene.coding_end
+                            }
 
 
                     #variants = list(vcf_reader.fetch(gene.chrom, gene.start, gene.end))
 
 
-                    yield (gene, list(exons()), max(20, pileups.max()))
+                    yield (gene, list(exons()), max(20, pileups.max()), coverage_exon_rows)
                 except Exception as e:
                     print e
                     print "Error..", gene

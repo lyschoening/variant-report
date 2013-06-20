@@ -39,7 +39,7 @@ def get_template():
     texenv.filters['int_add_commas'] = int_add_commas
 
     template = texenv.from_string(r"""
-\documentclass[a4paper]{report}
+\documentclass[a4paper,landscape]{report}
 \usepackage{a4wide}
 \usepackage{fullpage}
 \usepackage{graphicx}
@@ -71,7 +71,7 @@ def get_template():
 \setlength\LTright{0pt}
 \setlength\tabcolsep{2pt}
 
-{% for gene, exons, max_pileup in objects %}
+{% for gene, exons, max_pileup, coverage_table_rows in objects %}
     % \begin{landscape}
     \section*{((( gene.name ))) gene}
 
@@ -92,7 +92,7 @@ def get_template():
             },
             extra y ticks={20},
             extra y tick style={grid=major},
-            width=1/(((exons|length )))*(\textwidth-1.8cm),
+            width=1/(((exons|length )))*(\textwidth-2.0cm),
             height=3.0cm,
             ylabel=coverage,
             tickpos=left,
@@ -111,6 +111,45 @@ def get_template():
         \end{groupplot}
     \end{tikzpicture}
 
+    {\sffamily
+        \begin{longtable}{@{\extracolsep{\fill}}llrrrrrrrrrrrrrrrrrrrr@{}}
+
+
+        {% for indexes, exon_names in coverage_table_rows %}
+                {% if loop.first %}
+                    \toprule
+		            & & \multicolumn{20}{c}{Exon} \\
+                {% else %}
+                    \midrule
+                {% endif %}
+
+                &
+		        {% for name in exon_names %}
+                    & ((( name )))
+		        {% endfor %}\\
+
+		        \midrule
+
+                {% if loop.first %}
+                    \endhead
+                {% endif %}
+
+                Coverage & avg.
+                {% for index in indexes %}
+                    & ((( '%d' | format(exons[index].mean) )))
+                {% endfor %}\\
+                 & min.
+                {% for index in indexes %}
+                    & ((( '%d' | format(exons[index].min) )))
+                {% endfor %}\\
+                 & max.
+                {% for index in indexes %}
+                    & ((( '%d' | format(exons[index].max) )))
+                {% endfor %}\\
+        {% endfor %}
+        \bottomrule
+		\end{longtable}
+    }
     % \end{landscape}
 {% endfor %}
 \end{document}
