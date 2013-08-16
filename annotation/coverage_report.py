@@ -72,16 +72,12 @@ def main():
 
                     # short_chrom = gene.chrom[3:] if gene.chrom.startswith('chr') else gene.chrom
 
-                    print gene.chrom, gene.start, gene.end
 
                     for pileup in sample.pileup(gene.chrom, gene.start, gene.end):
                         try:
                             pileups[pileup.pos - gene.start] = pileup.n
                         except IndexError:
                             pass
-
-                    print 'x', sum(pileups), sample
-
 
                     def exons():
 
@@ -93,22 +89,16 @@ def main():
                                                                                       exon_end - gene.start)]
 
 
-                            all_otr = exon_start > gene.coding_start and exon_end < gene.coding_end
+                            all_coding = exon_start > gene.coding_start and exon_end < gene.coding_end
 
-                            print exon_names[j], all_otr, exon_end <= gene.coding_start, exon_start >= gene.coding_end, sum(exon_pileup), sum(pileups)
-
-                            if not all_otr:
+                            if not all_coding:
                                 if exon_end <= gene.coding_start or exon_start >= gene.coding_end:
                                     yield { 'name': '--', 'skip': True}
                                     continue
 
-
-
                                 if exon_start < gene.coding_start:
-                                    print 'start', exon_start, gene.coding_start, gene.coding_start - exon_start + 1
                                     exon_pileup = exon_pileup[gene.coding_start - exon_start + 1:]
                                 if exon_end > gene.coding_end:
-                                    print 'end', exon_end, gene.coding_end, -(gene.coding_end - exon_end)
                                     exon_pileup = exon_pileup[:gene.coding_end - exon_end]
 
                             if gene.is_reverse:
