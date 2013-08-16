@@ -78,7 +78,7 @@ def get_template():
     % \begin{landscape}
     \section*{((( gene.name ))) gene}
 
-    Report for the ((( gene.name ))) gene, accession number {\tt ((( gene.accession|escape_tex )))}, at position {\tt ((( gene.chrom ))):((( gene.start|int_add_commas )))--((( gene.end|int_add_commas )))}. Coverage within ORFs only. \\
+    Report for the ((( gene.name ))) gene, accession number {\tt ((( gene.accession|escape_tex )))}, at position {\tt ((( gene.chrom ))):((( gene.start|int_add_commas )))--((( gene.end|int_add_commas )))}. Coverage within coding regions only. \\
 
     \begin{tikzpicture}
 
