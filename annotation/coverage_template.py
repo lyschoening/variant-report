@@ -51,6 +51,9 @@ def get_template():
 \usetikzlibrary{datavisualization}
 \usetikzlibrary{pgfplots.groupplots}
 
+\usepackage{xcolor}
+\usepackage{colortbl}
+
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 
@@ -71,11 +74,11 @@ def get_template():
 \setlength\LTright{0pt}
 \setlength\tabcolsep{2pt}
 
-{% for gene, exons, max_pileup, coverage_table_rows in objects %}
+{% for gene, exons, orf_exon_count, max_pileup, coverage_table_rows in objects %}
     % \begin{landscape}
     \section*{((( gene.name ))) gene}
 
-    Report for the ((( gene.name ))) gene, accession number {\tt ((( gene.accession|escape_tex )))}, at position {\tt ((( gene.chrom ))):((( gene.start|int_add_commas )))--((( gene.end|int_add_commas )))}.\\
+    Report for the ((( gene.name ))) gene, accession number {\tt ((( gene.accession|escape_tex )))}, at position {\tt ((( gene.chrom ))):((( gene.start|int_add_commas )))--((( gene.end|int_add_commas )))}. Coverage within ORFs only. \\
 
     \begin{tikzpicture}
 
@@ -83,7 +86,7 @@ def get_template():
 
         \begin{groupplot}[
             group style={
-                columns=((( exons|length ))),
+                columns=((( orf_exon_count ))),
                 vertical sep=0pt,
                 ylabels at=edge left,
                 xlabels at=edge bottom,
@@ -92,7 +95,7 @@ def get_template():
             },
             extra y ticks={20},
             extra y tick style={grid=major},
-            width=1/(((exons|length )))*(\textwidth-2.0cm),
+            width=1/((( orf_exon_count )))*(\textwidth-2.0cm),
             height=3.0cm,
             ylabel=coverage,
             tickpos=left,
@@ -104,9 +107,11 @@ def get_template():
             ymax=((( max_pileup )))
         ]
         {% for exon in exons %}
+            {% if not exon.skip %}
         \nextgroupplot[xlabel=((( exon.name )))]
-        \addplot [{% if exon.coding %}blue{% else %}black{% endif %}!80!black, fill={% if exon.coding %}blue{% else %}black{% endif %}, fill opacity=0.2] coordinates {{% for point in exon.points %}( ((( point.0 ))),((( point.1 ))) ){% endfor %}}
+        \addplot [blue!{% if exon.coding %}80{% else %}70{% endif %}!black, fill=blue, fill opacity=0.2] coordinates {{% for point in exon.points %}( ((( point.0 ))),((( point.1 ))) ){% endfor %}}
             |- (axis cs:0,0) -- cycle;
+            {% endif %}
         {% endfor %}
         \end{groupplot}
     \end{tikzpicture}
@@ -115,7 +120,8 @@ def get_template():
         \begin{longtable}{@{\extracolsep{\fill}}llrrrrrrrrrrrrrrrrrrrr@{}}
 
 
-        {% for indexes, exon_names in coverage_table_rows %}
+        {% for row in coverage_table_rows %}
+
                 {% if loop.first %}
                     \toprule
 		            & & \multicolumn{20}{c}{Exon} \\
@@ -124,8 +130,11 @@ def get_template():
                 {% endif %}
 
                 &
-		        {% for name in exon_names %}
-                    & ((( name )))
+
+		        {% for index, name in row %}
+                    &
+                    {% if not exons[index].skip %}
+                        {% if exons[index].mean < 30 %}\cellcolor{red!25}{% endif %}{% endif %} ((( name )))
 		        {% endfor %}\\
 
 		        \midrule
@@ -135,16 +144,16 @@ def get_template():
                 {% endif %}
 
                 Coverage & avg.
-                {% for index in indexes %}
-                    & ((( '%d' | format(exons[index].mean) )))
+                {% for index, name in row %}
+                    & {% if not exons[index].skip %} ((( '%d' | format(exons[index].mean) ))) {% else %} -- {% endif %}
                 {% endfor %}\\
                  & min.
-                {% for index in indexes %}
-                    & ((( '%d' | format(exons[index].min) )))
+                {% for index, name in row %}
+                    & {% if not exons[index].skip %} ((( '%d' | format(exons[index].min) ))) {% else %} -- {% endif %}
                 {% endfor %}\\
                  & max.
-                {% for index in indexes %}
-                    & ((( '%d' | format(exons[index].max) )))
+                {% for index, name in row %}
+                    & {% if not exons[index].skip %} ((( '%d' | format(exons[index].max) ))) {% else %} -- {% endif %}
                 {% endfor %}\\
         {% endfor %}
         \bottomrule

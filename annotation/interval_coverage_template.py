@@ -74,17 +74,22 @@ def get_template():
 \begin{landscape}
 
 {	\sf
-    \begin{longtable}{@{\extracolsep{\fill}}lrrrr@{\extracolsep{\fill}}}
+    \begin{longtable}{@{\extracolsep{\fill}}lrrrrrrrr@{\extracolsep{\fill}}}
     \toprule
-    ID & Position & Min. & Avg. & Max. Coverage \\
-    \toprule
+    & & \multicolumn{7}{c}{Coverage} \\
+    ID & Position & Min. & 10\% & 30\% & 50\% & 70\% & 90\% & Max. \\
+    \midrule
     \endhead
 
-{% for name, chrom, start, end, min_coverage, max_coverage, mean_coverage in objects %}
+{% for name, chrom, start, end, min_coverage, max_coverage, quants in objects %}
     {% if min_coverage < minimum_coverage %}\color{red}{% endif %} \textbf{((( name|escape_tex )))} &
     \tt ((( chrom ))):((( start|int_add_commas )))--((( end|int_add_commas ))) &
+
     {% if min_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( '%d' | format(min_coverage) ))) &
-    {% if mean_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( '%3.2f' | format(mean_coverage) ))) &
+
+    {% for quant in quants %}
+        {% if quant < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( '%3.2f' | format(quant) ))) &
+    {% endfor %}
     {% if max_coverage < minimum_coverage %}\cellcolor{red!25}{% endif %} ((( '%d'| format(max_coverage) ))) \\
 {% endfor %}
 

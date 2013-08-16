@@ -18,6 +18,8 @@ def main():
     parser.add_argument('-i', '--intervals', type=str, help='Bed file (*.bed)')
     parser.add_argument('-o', '--output', type=str, default='Report')
     parser.add_argument('-minimum-coverage', type=int, default=30)
+    parser.add_argument('--use-chr-prefix', type=bool, default=False)
+
     # parser.add_argument('--tables', type=str, default='IMPORTANT_VARIANTS,ALL_VARIANTS')
 
     args = parser.parse_args()
@@ -27,10 +29,14 @@ def main():
     sample = pysam.Samfile(args.c__coverage, 'rb')
     sample_name = basename(args.c__coverage).split('.')[0]
 
-    tex_file_prefix = '%s_%s_coverage' % (args.output, sample_name)
+    tex_file_prefix = args.output
     tex_file_name = os.path.abspath('%s.tex' % tex_file_prefix)
 
     template = get_template()
+
+    # TODO logic to switch between 'chr1' and '1' naming.
+
+
 
     with open(tex_file_name, 'w') as tex_file:
 
@@ -40,13 +46,20 @@ def main():
 
                 pileups = numpy.zeros(end - start + 1)
 
-                for pileup in sample.pileup(chrom[3:] if chrom.startswith('chr') else chrom, start, end):
+                if args.use_chr_prefix:
+                    chrom = chrom[3:] if chrom.startswith('chr') else chrom
+                else:
+                    chrom = chrom if chrom.startswith('chr') else 'chr{}'.format(chrom)
+
+                for pileup in sample.pileup(chrom, start, end):
                     try:
                         pileups[pileup.pos - start] = pileup.n
                     except IndexError:
                         pass
 
-                yield line['name'], chrom, start, end, numpy.min(pileups), numpy.max(pileups), numpy.mean(pileups)
+                quants = numpy.percentile(pileups[1:], [10, 30, 50, 70, 90])
+
+                yield line['name'], chrom, start, end, numpy.min(pileups[1:]), numpy.max(pileups), quants
 
         tex_file.write(
             template.render(objects=objects(args.intervals), minimum_coverage=args.minimum_coverage, sample=sample,
