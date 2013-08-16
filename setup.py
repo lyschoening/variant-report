@@ -6,7 +6,7 @@ with open('requirements.txt', 'r') as f:
 
 setup(
     name='variant-report',
-    version='0.1.1',
+    version='0.2.0',
     packages=['annotation', 'annotation.utils'],
     url='',
     license='',
