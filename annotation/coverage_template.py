@@ -160,6 +160,7 @@ def get_template():
 		\end{longtable}
     }
     % \end{landscape}
+    \newpage
 {% endfor %}
 \end{document}
 """)
