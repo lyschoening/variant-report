@@ -134,7 +134,14 @@ def get_template():
 		        {% for index, name in row %}
                     &
                     {% if not exons[index].skip %}
-                        {% if exons[index].mean < 30 %}\cellcolor{red!25}{% endif %}{% endif %} ((( name )))
+                        {% if exons[index].min < 10 %}
+                            \cellcolor{red!25}
+                        {% elif exons[index].min < 20 %}
+                            \cellcolor{orange!25}
+                        {% elif exons[index].min < 30 %}
+                            \cellcolor{yellow!25}
+                        {% endif %}
+                    {% endif %} ((( name )))
 		        {% endfor %}\\
 
 		        \midrule
