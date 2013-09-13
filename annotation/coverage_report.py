@@ -151,8 +151,8 @@ def main():
     except OSError:
         print "Could not find latexmk executable, skipping."
 
-#    for extension in ('tex', 'aux', 'log', 'out'): # latexmk old versions
-#        os.unlink('.'.join((tex_file_prefix, extension)))
+    for extension in ('tex', 'aux', 'log', 'out'): # latexmk old versions
+        os.unlink('.'.join((tex_file_prefix, extension)))
 
 if __name__ == '__main__':
     main()
